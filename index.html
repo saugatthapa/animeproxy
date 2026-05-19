@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proxify Streams — API Docs</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box
+    }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --surface2: #1a1a26;
+      --border: #ffffff0a;
+      --text: #e4e4e7;
+      --muted: #71717a;
+      --accent: #a78bfa;
+      --accent2: #818cf8;
+      --green: #34d399;
+      --red: #f87171;
+      --yellow: #fbbf24;
+      --blue: #60a5fa;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased
+    }
+
+    .grain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: .03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")
+    }
+
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0
+    }
+
+    .orb-1 {
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, #a78bfa15, transparent);
+      top: -200px;
+      right: -100px
+    }
+
+    .orb-2 {
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, #818cf810, transparent);
+      bottom: -150px;
+      left: -100px
+    }
+
+    .orb-3 {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, #34d39908, transparent);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%)
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1
+    }
+
+    header {
+      padding: 80px 0 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 28px
+    }
+
+    .logo-cube {
+      width: 48px;
+      height: 48px;
+      perspective: 200px;
+      flex-shrink: 0
+    }
+
+    .logo-cube-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      animation: spin 8s linear infinite
+    }
+
+    .logo-cube-inner div {
+      position: absolute;
+      width: 48px;
+      height: 48px;
+      border: 1.5px solid var(--accent);
+      border-radius: 8px;
+      background: #a78bfa08;
+      backdrop-filter: blur(4px)
+    }
+
+    .logo-cube-inner .front {
+      transform: translateZ(24px)
+    }
+
+    .logo-cube-inner .back {
+      transform: rotateY(180deg) translateZ(24px)
+    }
+
+    .logo-cube-inner .left {
+      transform: rotateY(-90deg) translateZ(24px)
+    }
+
+    .logo-cube-inner .right {
+      transform: rotateY(90deg) translateZ(24px)
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotateX(-15deg) rotateY(0deg)
+      }
+
+      100% {
+        transform: rotateX(-15deg) rotateY(360deg)
+      }
+    }
+
+    .logo-text {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -.5px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 48px
+    }
+
+    h1 {
+      font-size: clamp(36px, 5vw, 52px);
+      font-weight: 900;
+      letter-spacing: -1.5px;
+      line-height: 1.1;
+      margin-bottom: 16px;
+      background: linear-gradient(180deg, #fff 40%, #71717a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent
+    }
+
+    header p {
+      font-size: 17px;
+      color: var(--muted);
+      max-width: 520px;
+      margin: 0 auto;
+      line-height: 1.6
+    }
+
+    .try-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      background: #a78bfa12;
+      border: 1px solid #a78bfa25;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all .2s;
+      word-break: break-all
+    }
+
+    .try-link:hover {
+      background: #a78bfa20;
+      border-color: #a78bfa40;
+      transform: translateY(-1px)
+    }
+
+    .try-link::before {
+      content: '↗';
+      font-size: 14px
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 100px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--green);
+      margin-bottom: 24px;
+      text-transform: uppercase;
+      letter-spacing: 1px
+    }
+
+    .badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .3
+      }
+    }
+
+    section {
+      margin-bottom: 56px
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--accent);
+      margin-bottom: 16px
+    }
+
+    h2 {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -.5px;
+      margin-bottom: 12px
+    }
+
+    h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text)
+    }
+
+    p.desc {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+      margin-bottom: 20px
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 16px;
+      transition: border-color .3s, transform .3s, box-shadow .3s
+    }
+
+    .card:hover {
+      border-color: #ffffff15;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px #0005
+    }
+
+    .endpoint-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap
+    }
+
+    .method {
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      background: #34d39915;
+      color: var(--green);
+      border: 1px solid #34d39920
+    }
+
+    .path {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      color: var(--text);
+      word-break: break-all
+    }
+
+    .code-block {
+      position: relative;
+      background: #0d0d14;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 16px 0
+    }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: #ffffff04;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .code-lang {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase
+    }
+
+    .copy-btn {
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      cursor: pointer;
+      transition: all .2s
+    }
+
+    .copy-btn:hover {
+      background: var(--surface2);
+      color: var(--text)
+    }
+
+    pre {
+      padding: 20px;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #d4d4d8
+    }
+
+    pre .k {
+      color: var(--accent)
+    }
+
+    pre .s {
+      color: var(--green)
+    }
+
+    pre .c {
+      color: var(--muted)
+    }
+
+    pre .n {
+      color: var(--yellow)
+    }
+
+    pre .u {
+      color: var(--blue)
+    }
+
+    .provider-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+      margin: 20px 0
+    }
+
+    .provider {
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      text-align: center;
+      transition: all .3s
+    }
+
+    .provider:hover {
+      border-color: var(--accent);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px #a78bfa08
+    }
+
+    .provider-icon {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .provider-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 6px
+    }
+
+    .provider-name {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 4px
+    }
+
+    .provider-method {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace
+    }
+
+    .response-key {
+      color: var(--accent)
+    }
+
+    .response-val {
+      color: var(--green)
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin: 12px 0
+    }
+
+    th {
+      text-align: left;
+      padding: 10px 14px;
+      font-weight: 600;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #ffffff06;
+      vertical-align: top
+    }
+
+    td code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: #ffffff08;
+      color: var(--accent)
+    }
+
+    footer {
+      text-align: center;
+      padding: 48px 0;
+      color: var(--muted);
+      font-size: 12px;
+      border-top: 1px solid var(--border)
+    }
+
+    footer span {
+      color: var(--accent)
+    }
+
+    @media(max-width:768px) {
+      .container {
+        padding: 0 16px
+      }
+
+      header {
+        padding: 48px 0 40px
+      }
+
+      .logo-cube {
+        width: 40px;
+        height: 40px
+      }
+
+      .logo-cube-inner div {
+        width: 40px;
+        height: 40px
+      }
+
+      .logo-cube-inner .front {
+        transform: translateZ(20px)
+      }
+
+      .logo-cube-inner .back {
+        transform: rotateY(180deg) translateZ(20px)
+      }
+
+      .logo-cube-inner .left {
+        transform: rotateY(-90deg) translateZ(20px)
+      }
+
+      .logo-cube-inner .right {
+        transform: rotateY(90deg) translateZ(20px)
+      }
+
+      .logo-text {
+        font-size: 20px;
+        line-height: 40px
+      }
+
+      h1 {
+        font-size: 28px;
+        letter-spacing: -1px
+      }
+
+      header p {
+        font-size: 15px
+      }
+
+      h2 {
+        font-size: 20px
+      }
+
+      section {
+        margin-bottom: 40px
+      }
+
+      .provider-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px
+      }
+
+      .provider {
+        padding: 14px
+      }
+
+      .provider-icon {
+        width: 32px;
+        height: 32px;
+        margin-bottom: 8px
+      }
+
+      .provider-name {
+        font-size: 13px
+      }
+
+      .card {
+        padding: 20px;
+        border-radius: 12px
+      }
+
+      pre {
+        padding: 14px;
+        font-size: 11px;
+        line-height: 1.6
+      }
+
+      .code-header {
+        padding: 8px 12px
+      }
+
+      .endpoint-row {
+        gap: 8px
+      }
+
+      .path {
+        font-size: 12px
+      }
+
+      table {
+        display: block;
+        overflow-x: auto
+      }
+
+      th,
+      td {
+        padding: 8px 10px;
+        font-size: 12px;
+        white-space: nowrap
+      }
+
+      .try-link {
+        font-size: 11px;
+        padding: 6px 12px
+      }
+    }
+
+    @media(max-width:420px) {
+      .container {
+        padding: 0 12px
+      }
+
+      header {
+        padding: 36px 0 32px
+      }
+
+      .logo {
+        gap: 10px;
+        margin-bottom: 20px
+      }
+
+      .logo-cube {
+        width: 34px;
+        height: 34px
+      }
+
+      .logo-cube-inner div {
+        width: 34px;
+        height: 34px
+      }
+
+      .logo-cube-inner .front {
+        transform: translateZ(17px)
+      }
+
+      .logo-cube-inner .back {
+        transform: rotateY(180deg) translateZ(17px)
+      }
+
+      .logo-cube-inner .left {
+        transform: rotateY(-90deg) translateZ(17px)
+      }
+
+      .logo-cube-inner .right {
+        transform: rotateY(90deg) translateZ(17px)
+      }
+
+      .logo-text {
+        font-size: 18px;
+        line-height: 34px
+      }
+
+      h1 {
+        font-size: 24px
+      }
+
+      header p {
+        font-size: 14px
+      }
+
+      .badge {
+        font-size: 10px;
+        padding: 4px 10px
+      }
+
+      .provider-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px
+      }
+
+      .provider {
+        padding: 12px
+      }
+
+      pre {
+        padding: 10px;
+        font-size: 10px
+      }
+
+      .card {
+        padding: 16px
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="grain"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="container">
+    <header>
+      <div class="logo">
+        <div class="logo-cube">
+          <div class="logo-cube-inner">
+            <div class="front"></div>
+            <div class="back"></div>
+            <div class="left"></div>
+            <div class="right"></div>
+          </div>
+        </div>
+        <span class="logo-text">Proxify Streams</span>
+      </div>
+      <div class="badge">v1.0 — Live</div>
+      <h1>Unified Stream Proxy API</h1>
+      <p>One endpoint. Four providers. Pass any HLS stream URL and get back proxied links from Miruro, Anikuro,
+        LunarAnime, and Animanga — instantly.</p>
+    </header>
+
+    <section>
+      <div class="section-label">Overview</div>
+      <h2>How It Works</h2>
+      <p class="desc">Send a stream URL and its required referer separated by a pipe <code>|</code>. The server encodes
+        both using each provider's specific algorithm and returns all proxied URLs in a single JSON response.</p>
+
+      <div class="provider-grid">
+        <div class="provider">
+          <div class="provider-icon"><img src="https://www.miruro.to/assets/logo-Dnw3w3dS.png" alt="Miruro"></div>
+          <div class="provider-name">Miruro</div>
+          <div class="provider-method">XOR + Base64</div>
+        </div>
+        <div class="provider">
+          <div class="provider-icon"><img src="https://anikuro.to/static/images/anikuro_Christmas-min.png" alt="Anikuro"
+              style="transform: scale(1.4)"></div>
+          <div class="provider-name">Anikuro</div>
+          <div class="provider-method">Base64(url|ref)</div>
+        </div>
+        <div class="provider">
+          <div class="provider-icon"><img src="http://lunaranime.ru/favicon.ico" alt="LunarAnime"></div>
+          <div class="provider-name">LunarAnime</div>
+          <div class="provider-method">URL Encode</div>
+        </div>
+        <div class="provider">
+          <div class="provider-icon"><img
+              src="https://animelok.xyz/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Flogo.15.9k7m69ql7_.png&w=384&q=75"
+              alt="Animanga" style="transform: scale(1.4)"></div>
+          <div class="provider-name">Animanga</div>
+          <div class="provider-method">URL + Headers JSON</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-label">Endpoint</div>
+      <h2>Generate Proxy URLs</h2>
+
+      <div class="card">
+        <div class="endpoint-row">
+          <span class="method">GET</span>
+          <span class="path">/proxy?data={url}|{referer}</span>
+        </div>
+        <p class="desc" style="margin-bottom:0">Also accepts path format: <code
+            style="font-family:'JetBrains Mono',monospace;font-size:12px;padding:2px 8px;border-radius:4px;background:#ffffff08;color:var(--accent)">/proxy/{url}|{referer}</code>
+        </p>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>url</code></td>
+            <td>string</td>
+            <td>The raw HLS stream URL (m3u8 or mp4)</td>
+          </tr>
+          <tr>
+            <td><code>referer</code></td>
+            <td>string</td>
+            <td>The referer header required by the origin CDN</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <div class="section-label">Example 1</div>
+      <h2>OWO CDN — 1080p HLS</h2>
+      <p class="desc">Proxify a kwik.cx stream hosted on vault-99.owocdn.top</p>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Request</span><button class="copy-btn"
+            onclick="copyCode(this)">Copy</button></div>
+        <pre>GET <span class="u">http://127.0.0.1:5555/proxy</span>?data=<span class="s">https://vault-99.owocdn.top/stream/99/01/
+8b21abba0e6acc4ca642d3a254fd3696fb877a17b11d650091ee4898ba97a413/
+uwu.m3u8</span><span class="n">|</span><span class="s">https://kwik.cx/</span></pre>
+      </div>
+      <a class="try-link"
+        href="http://127.0.0.1:5555/proxy?data=https://vault-99.owocdn.top/stream/99/01/8b21abba0e6acc4ca642d3a254fd3696fb877a17b11d650091ee4898ba97a413/uwu.m3u8|https://kwik.cx/"
+        target="_blank">Try this request</a>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Response — 200 OK</span><button class="copy-btn"
+            onclick="copyCode(this)">Copy</button></div>
+        <pre>{
+  <span class="response-key">"proxifiedSource"</span>: {
+    <span class="response-key">"miruro"</span>: <span class="response-val">"https://pro.ultracloud.cc/m3u8/?u=zTlM7Gto...&r=zTlM7Gto..."</span>,
+    <span class="response-key">"anikuro"</span>: <span class="response-val">"https://proxy.anikuro.to/aHR0cHM6Ly92YXVsdC05OS5vd29...m3u8"</span>,
+    <span class="response-key">"lunaranime"</span>: <span class="response-val">"https://cluster.lunaranime.ru/api/proxy/hls/custom?url=https://vault-99.owocdn.top/...uwu.m3u8&referer=https://kwik.cx/"</span>,
+    <span class="response-key">"animanga"</span>: <span class="response-val">"https://upcloud.animanga.fun/proxy?url=https://vault-99.owocdn.top/...uwu.m3u8&headers={"Referer": "https://kwik.cx/"}"</span>
+  }
+}</pre>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-label">Example 2</div>
+      <h2>Code29Wave — MegaUp Stream</h2>
+      <p class="desc">Proxify a megaup.nl stream hosted on rrr.code29wave.site</p>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Request</span><button class="copy-btn"
+            onclick="copyCode(this)">Copy</button></div>
+        <pre>GET <span class="u">http://127.0.0.1:5555/proxy</span>?data=<span class="s">https://rrr.code29wave.site/pyje/c5/
+h50df5af2216e63e526ab13c2e4f9bf365ba5dcdb6d40256d03672892d4cceb770a0c
+11889506f11b2f80b30ad52653743dcc593da691d50be80dcc99032fead80f/
+list,EJYZr3MzbO03rB6B8-LjdB6_ivN2Qw.m3u8</span><span class="n">|</span><span class="s">https://megaup.nl/</span></pre>
+      </div>
+      <a class="try-link"
+        href="http://127.0.0.1:5555/proxy?data=https://rrr.code29wave.site/pyje/c5/h50df5af2216e63e526ab13c2e4f9bf365ba5dcdb6d40256d03672892d4cceb770a0c11889506f11b2f80b30ad52653743dcc593da691d50be80dcc99032fead80f/list,EJYZr3MzbO03rB6B8-LjdB6_ivN2Qw.m3u8|https://megaup.nl/"
+        target="_blank">Try this request</a>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Response — 200 OK</span><button class="copy-btn"
+            onclick="copyCode(this)">Copy</button></div>
+        <pre>{
+  <span class="response-key">"proxifiedSource"</span>: {
+    <span class="response-key">"miruro"</span>: <span class="response-val">"https://pro.ultracloud.cc/m3u8/?u=8RcR5jV5...&r=xTRG6Gxs..."</span>,
+    <span class="response-key">"anikuro"</span>: <span class="response-val">"https://proxy.anikuro.to/aHR0cHM6Ly9ycnIuY29kZTI5...m3u8"</span>,
+    <span class="response-key">"lunaranime"</span>: <span class="response-val">"https://cluster.lunaranime.ru/api/proxy/hls/custom?url=https://rrr.code29wave.site/...m3u8&referer=https://megaup.nl/"</span>,
+    <span class="response-key">"animanga"</span>: <span class="response-val">"https://upcloud.animanga.fun/proxy?url=https://rrr.code29wave.site/...m3u8&headers={"Referer": "https://megaup.nl/"}"</span>
+  }
+}</pre>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-label">Providers</div>
+      <h2>Encoding Algorithms</h2>
+
+      <div class="card">
+        <h3 style="display:flex;align-items:center;gap:8px"><img src="https://www.miruro.to/assets/logo-Dnw3w3dS.png"
+            style="width:20px;height:20px;object-fit:contain"> Miruro — UltraCloud</h3>
+        <p class="desc">XOR-encrypts both <code>url</code> and <code>referer</code> with a 16-byte key, then
+          Base64url-encodes. The key is <code
+            style="font-family:'JetBrains Mono',monospace;font-size:11px;padding:2px 6px;border-radius:4px;background:#ffffff08;color:var(--yellow)">a54d389c18527d9fd3e7f0643e27edbe</code>
+        </p>
+      </div>
+
+      <div class="card">
+        <h3 style="display:flex;align-items:center;gap:8px"><img
+            src="https://anikuro.to/static/images/anikuro_Christmas-min.png"
+            style="width:26px;height:26px;object-fit:contain"> Anikuro</h3>
+        <p class="desc">Concatenates <code>url|referer</code> and standard Base64-encodes it. Appends the file extension
+          (.m3u8 or .mp4) to the path.</p>
+      </div>
+
+      <div class="card">
+        <h3 style="display:flex;align-items:center;gap:8px"><img src="http://lunaranime.ru/favicon.ico"
+            style="width:20px;height:20px;object-fit:contain"> LunarAnime</h3>
+        <p class="desc">Passes <code>url</code> and <code>referer</code> as percent-encoded query parameters to their
+          HLS cluster proxy.</p>
+      </div>
+
+      <div class="card">
+        <h3 style="display:flex;align-items:center;gap:8px"><img
+            src="https://animelok.xyz/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Flogo.15.9k7m69ql7_.png&w=384&q=75"
+            style="width:26px;height:26px;object-fit:contain"> Animanga — UpCloud</h3>
+        <p class="desc">Passes <code>url</code> as a query param and <code>referer</code> inside a JSON-encoded
+          <code>headers</code> object: <code>{"Referer": "..."}</code>
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-label">Errors</div>
+      <h2>Error Responses</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Condition</th>
+            <th>Body</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>400</code></td>
+            <td>Missing data param</td>
+            <td><code>{"error": "No data provided"}</code></td>
+          </tr>
+          <tr>
+            <td><code>400</code></td>
+            <td>No pipe separator</td>
+            <td><code>{"error": "Invalid format (expected url|referer)"}</code></td>
+          </tr>
+          <tr>
+            <td><code>500</code></td>
+            <td>Server exception</td>
+            <td><code>{"error": "..."}</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <div class="section-label">Quick Start</div>
+      <h2>Run the Server</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">Terminal</span><button class="copy-btn"
+            onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="c">$</span> pip install flask
+<span class="c">$</span> python server.py
+
+<span class="c"> * Running on</span> <span class="u">http://127.0.0.1:5555</span></pre>
+      </div>
+    </section>
+
+    <footer>Built by <span>Walter</span></footer>
+  </div>
+
+  <script>
+    function copyCode(btn) {
+      const pre = btn.closest('.code-block').querySelector('pre');
+      navigator.clipboard.writeText(pre.textContent.trim());
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 1500);
+    }
+  </script>
+</body>
+
+</html>
