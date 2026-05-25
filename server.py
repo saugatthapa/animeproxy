@@ -8,6 +8,15 @@ class EverythingConverter(BaseConverter):
 app = Flask(__name__)
 app.url_map.converters['everything'] = EverythingConverter
 
+DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36"
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+    return response
+
 class ProxyGenerator:
     def __init__(self):
         self.miruro_key = bytes.fromhex("a54d389c18527d9fd3e7f0643e27edbe")
@@ -31,14 +40,21 @@ class ProxyGenerator:
     def animanga(self, url, referer):
         from urllib.parse import quote
         import json
-        headers = json.dumps({"Referer": referer})
+        headers = json.dumps({"Referer": referer, "User-Agent": DEFAULT_USER_AGENT})
         return f"https://upcloud.animanga.fun/proxy?url={quote(url, safe=':/')}&headers={quote(headers, safe=':/')}"
+
+    def animekai(self, url, referer):
+        return self.animanga(url, referer)
 
 generator = ProxyGenerator()
 
 @app.route('/')
 def docs():
     return send_from_directory(os.path.dirname(os.path.abspath(__file__)), 'index.html')
+
+@app.route('/health')
+def health():
+    return jsonify({"ok": True, "providers": ["animekai", "animanga", "anikuro", "lunaranime", "miruro"]})
 
 @app.route('/proxy/<everything:data>')
 @app.route('/proxy')
@@ -64,6 +80,7 @@ def get_proxy(data=None):
 
         return jsonify({
             "proxifiedSource": {
+                "animekai": generator.animekai(url, referer),
                 "miruro": generator.miruro(url, referer),
                 "anikuro": generator.anikuro(url, referer),
                 "lunaranime": generator.lunaranime(url, referer),
