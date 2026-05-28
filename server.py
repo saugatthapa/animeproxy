@@ -1,6 +1,8 @@
 import base64, os
-from flask import Flask, jsonify, request, send_from_directory
+import requests as http_requests
+from flask import Flask, jsonify, request, send_from_directory, Response as FlaskResponse
 from werkzeug.routing import BaseConverter
+from urllib.parse import quote, unquote, urljoin
 
 class EverythingConverter(BaseConverter):
     regex = '.*'
@@ -34,11 +36,9 @@ class ProxyGenerator:
         return f"https://proxy.anikuro.to/{b64}{ext}"
 
     def lunaranime(self, url, referer):
-        from urllib.parse import quote
         return f"https://cluster.lunaranime.ru/api/proxy/hls/custom?url={quote(url, safe=':/')}&referer={quote(referer, safe=':/')}"
 
     def animanga(self, url, referer):
-        from urllib.parse import quote
         import json
         headers = json.dumps({"Referer": referer, "User-Agent": DEFAULT_USER_AGENT})
         return f"https://upcloud.animanga.fun/proxy?url={quote(url, safe=':/')}&headers={quote(headers, safe=':/')}"
@@ -46,7 +46,58 @@ class ProxyGenerator:
     def animekai(self, url, referer):
         return self.animanga(url, referer)
 
+    def reanime(self, url, _referer=None):
+        """Real byte-level proxy for flixcloud HLS streams.
+        Returns a URL to this same server which fetches the stream with
+        the correct Referer header (browsers can't set Referer cross-origin).
+        """
+        proxy_base = request.scheme + "://" + request.host
+        return f"{proxy_base}/reanime-proxy?url={quote(url, safe='')}"
+
 generator = ProxyGenerator()
+
+# ── Byte-level proxy for Re:ANIME / Flixcloud ─────────────────────────────────
+
+@app.route('/reanime-proxy')
+def reanime_proxy():
+    """Fetch flixcloud HLS content with Referer: https://reanime.to/ header.
+    Rewrites m3u8 playlists so segment requests also route through this proxy.
+    """
+    url = request.args.get('url', '')
+    if not url:
+        return jsonify({"error": "No url provided"}), 400
+
+    headers = {
+        "Referer": "https://reanime.to/",
+        "User-Agent": DEFAULT_USER_AGENT,
+    }
+
+    try:
+        resp = http_requests.get(url, headers=headers, timeout=25)
+        resp.raise_for_status()
+    except Exception as e:
+        return jsonify({"error": f"Fetch failed: {type(e).__name__}: {str(e)[:100]}"}), 502
+
+    ctype = resp.headers.get('content-type', '')
+
+    # Rewrite m3u8 so all segment URLs route back through this proxy
+    if 'm3u8' in ctype or url.endswith('.m3u8'):
+        base = url.rsplit('/', 1)[0]
+        lines = []
+        for line in resp.text.splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith('#'):
+                lines.append(stripped)
+            else:
+                abs_url = urljoin(base, stripped)
+                lines.append(f"/reanime-proxy?url={quote(abs_url)}")
+        content = '\n'.join(lines)
+        return FlaskResponse(content, mimetype=ctype or 'application/vnd.apple.mpegurl')
+
+    return FlaskResponse(resp.content, mimetype=ctype or 'application/octet-stream')
+
+
+# ── Routes ─────────────────────────────────────────────────────────────────────
 
 @app.route('/')
 def docs():
@@ -54,13 +105,12 @@ def docs():
 
 @app.route('/health')
 def health():
-    return jsonify({"ok": True, "providers": ["animekai", "animanga", "anikuro", "lunaranime", "miruro"]})
+    return jsonify({"ok": True, "providers": ["animekai", "animanga", "anikuro", "lunaranime", "miruro", "reanime"]})
 
 @app.route('/proxy/<everything:data>')
 @app.route('/proxy')
 def get_proxy(data=None):
     try:
-        from urllib.parse import unquote
         if not data:
             data = request.args.get('data')
         if not data:
@@ -80,11 +130,12 @@ def get_proxy(data=None):
 
         return jsonify({
             "proxifiedSource": {
+                "reanime": generator.reanime(url),
                 "animekai": generator.animekai(url, referer),
                 "miruro": generator.miruro(url, referer),
                 "anikuro": generator.anikuro(url, referer),
                 "lunaranime": generator.lunaranime(url, referer),
-                "animanga": generator.animanga(url, referer)
+                "animanga": generator.animanga(url, referer),
             }
         })
     except Exception as e:
@@ -94,5 +145,4 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5555))
     app.run(host='0.0.0.0', port=port, debug=False)
 
-# Vercel deployment
 app = app
